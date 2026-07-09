@@ -114,3 +114,40 @@ class TodoViewTestCase(TestCase):
         response = client.get('/1/')
 
         self.assertEqual(response.status_code, 404)
+
+    def test_edit_get_success(self):
+        task = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        response = client.get('/{}/edit/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/edit.html')
+        self.assertEqual(response.context['task'], task)
+
+    def test_edit_get_fail(self):
+        client = Client()
+        response = client.get('/1/edit/')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_edit_post_update(self):
+        task = Task(title='old title', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        data = {
+            'title': 'new title',
+            'due_at': '2024-07-02 12:00:00',
+            'completed': 'on',
+        }
+        response = client.post('/{}/edit/'.format(task.pk), data)
+
+        # should redirect to detail
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('/{}/'.format(task.pk)))
+
+        task_refresh = Task.objects.get(pk=task.pk)
+        self.assertEqual(task_refresh.title, 'new title')
+        self.assertTrue(task_refresh.completed)
+        # due_at should be set (aware) to the provided datetime
+        self.assertIsNotNone(task_refresh.due_at)
