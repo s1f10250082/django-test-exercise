@@ -6,9 +6,11 @@
     <title>To Do Application</title>
     <meta charset="UTF-8">
     <meta name="author" content="INIAD">
+    <link rel="stylesheet" href="{% static 'todo/css/index.css' %}">
 </head>
 
 <body>
+    <div class="container">
     <h1>Sample To Do Application</h1>
     <p>You can submit tasks from the following form.</p>
     <form action="{% url 'index' %}" method="post">
@@ -48,6 +50,7 @@
         </ul>
     </div>
     {% endfor %}
+    </div>
 </body>
 
 </html>

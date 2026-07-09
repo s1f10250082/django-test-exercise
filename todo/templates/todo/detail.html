@@ -6,9 +6,11 @@
     <title>To Do Application</title>
     <meta charset="UTF-8">
     <meta name="author" content="INIAD">
+    <link rel="stylesheet" href="{% static 'todo/css/detail.css' %}">
   </head>
 
   <body>
+    <div class="container">
     <h1>{{ task.title }}</h1>
     <ul>
       <li>Posted at: {{ task.posted_at }}</li>
@@ -24,6 +26,7 @@
 
     <div>
       <a href="{% url 'index' %}">Top</a>
+    </div>
     </div>
   </body>
 
