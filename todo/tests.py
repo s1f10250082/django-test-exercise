@@ -151,3 +151,17 @@ class TodoViewTestCase(TestCase):
         self.assertTrue(task_refresh.completed)
         # due_at should be set (aware) to the provided datetime
         self.assertIsNotNone(task_refresh.due_at)
+    def test_delete_success(self):
+        task = Task(title='task1')
+        task.save()
+        client = Client()
+        response = client.get('/{}/delete'.format(task.pk))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Task.objects.filter(pk=task.pk).exists())
+
+    def test_delete_fail(self):
+        client = Client()
+        response = client.get('/1/delete')
+
+        self.assertEqual(response.status_code, 404)
