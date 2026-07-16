@@ -6,8 +6,12 @@ from todo.models import Task
 # Create your views here.
 def index(request):
     if request.method == 'POST':
-        task = Task(title=request.POST['title'],
-                    due_at=make_aware(parse_datetime(request.POST['due_at'])))
+        due_at = request.POST.get('due_at')
+        task = Task(
+            title=request.POST['title'],
+            due_at=make_aware(parse_datetime(due_at)) if due_at else None,
+            photo=request.FILES.get('photo'),
+        )
         task.save()
 
     order = request.GET.get('order')
@@ -43,6 +47,11 @@ def edit(request, task_id):
         due_at = request.POST.get('due_at')
         task.due_at = make_aware(parse_datetime(due_at)) if due_at else None
         task.completed = 'completed' in request.POST
+        photo = request.FILES.get('photo')
+        if photo:
+            if task.photo:
+                task.photo.delete(save=False)
+            task.photo = photo
         task.save()
         return redirect('detail', task_id=task.id)
     context = {
@@ -54,5 +63,7 @@ def delete(request, task_id):
         task = Task.objects.get(pk=task_id)
     except Task.DoesNotExist:
         raise Http404("Task does not exist")
+    if task.photo:
+        task.photo.delete(save=False)
     task.delete()
     return redirect(index)

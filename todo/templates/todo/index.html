@@ -14,6 +14,7 @@
         <h1>To Do アプリケーション</h1>
         <p>以下のフォームから、やることを追加できます。</p>
 
+
         <form action="{% url 'index' %}" method="post">
             {% csrf_token %}
             <div class="form-group">
@@ -28,7 +29,7 @@
                 <button type="submit">追加する</button>
             </div>
         </form>
-
+     
         <form class="sort-form" action="{% url 'index' %}" method="get">
             <select id="sortSelect" name="order" onchange="this.form.submit()">
                 <option value="post" {% if request.GET.order == 'post' or not request.GET.order %}selected{% endif %}>投稿順</option>
