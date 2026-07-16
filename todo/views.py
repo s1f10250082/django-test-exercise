@@ -42,6 +42,8 @@ def edit(request, task_id):
         task.completed = 'completed' in request.POST
         photo = request.FILES.get('photo')
         if photo:
+            if task.photo:
+                task.photo.delete(save=False)
             task.photo = photo
         task.save()
         return redirect('detail', task_id=task.id)
@@ -54,5 +56,7 @@ def delete(request, task_id):
         task = Task.objects.get(pk=task_id)
     except Task.DoesNotExist:
         raise Http404("Task does not exist")
+    if task.photo:
+        task.photo.delete(save=False)
     task.delete()
     return redirect(index)
