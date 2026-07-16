@@ -26,6 +26,12 @@
         <div>
             <label for="detailInput">Detail</label><br>
             <textarea id="detailInput" name="detail" rows="4" placeholder="Input details"></textarea>
+            <label for="favoriteInput">
+                <input id="favoriteInput" name="favorite" type="checkbox">
+                Favorite
+            </label>
+        </div>
+        <div>
             <label for="photoInput">Photo</label><br>
             <input id="photoInput" name="photo" type="file" accept="image/*">
         </div>
@@ -37,7 +43,8 @@
 
     <div>
         <a href="{% url 'index' %}?order=due">Sort by Due Date</a> |
-        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a>
+        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a> |
+        <a href="{% url 'index' %}?order=favorite">Show Favorites Only</a>
     </div>
 
     {% for task in tasks %}
@@ -50,6 +57,9 @@
             {% endif %}
             {% if task.due_at %}
             <li>Due at: {{ task.due_at }}</li>
+            {% endif %}
+            {% if task.favorite %}
+            <li>Status: Favorite</li>
             {% endif %}
             {% if task.photo %}
             <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;"></li>
