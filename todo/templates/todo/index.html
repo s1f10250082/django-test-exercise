@@ -24,6 +24,12 @@
             <input id="dueInput" name="due_at" type="datetime-local">
         </div>
         <div>
+            <label for="favoriteInput">
+                <input id="favoriteInput" name="favorite" type="checkbox">
+                Favorite
+            </label>
+        </div>
+        <div>
             <label for="photoInput">Photo</label><br>
             <input id="photoInput" name="photo" type="file" accept="image/*">
         </div>
@@ -35,7 +41,8 @@
 
     <div>
         <a href="{% url 'index' %}?order=due">Sort by Due Date</a> |
-        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a>
+        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a> |
+        <a href="{% url 'index' %}?order=favorite">Show Favorites Only</a>
     </div>
 
     {% for task in tasks %}
@@ -45,6 +52,9 @@
             <li>Posted at: {{ task.posted_at }}</li>
             {% if task.due_at %}
             <li>Due at: {{ task.due_at }}</li>
+            {% endif %}
+            {% if task.favorite %}
+            <li>Status: Favorite</li>
             {% endif %}
             {% if task.photo %}
             <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;"></li>
