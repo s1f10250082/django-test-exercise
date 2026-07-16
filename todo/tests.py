@@ -109,12 +109,25 @@ class TodoViewTestCase(TestCase):
 
     def test_index_post(self):
         client = Client()
-        data = {'title': 'Test Task', 'due_at': '2024-06-30 23:59:59'}
+        data = {
+            'title': 'Test Task',
+            'due_at': '2024-06-30 23:59:59',
+            'detail': 'Task detail content',
+        }
         response = client.post('/', data)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(len(response.context['tasks']), 1)
+        self.assertEqual(response.context['tasks'][0].detail, 'Task detail content')
+
+    def test_index_form_has_detail_textbox(self):
+        client = Client()
+        response = client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
 
     def test_index_post_with_photo(self):
         client = Client()
@@ -251,6 +264,17 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.templates[0].name, 'todo/edit.html')
         self.assertEqual(response.context['task'], task)
 
+    def test_edit_form_has_detail_textbox(self):
+        task = Task(title='task1', detail='Existing detail', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        response = client.get('/{}/edit/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
+        self.assertContains(response, 'Existing detail')
+
     def test_edit_get_fail(self):
         client = Client()
         response = client.get('/1/edit/')
@@ -265,6 +289,7 @@ class TodoViewTestCase(TestCase):
             'title': 'new title',
             'due_at': '2024-07-02 12:00:00',
             'completed': 'on',
+            'detail': 'updated detail',
         }
         response = client.post('/{}/edit/'.format(task.pk), data)
 
@@ -275,6 +300,7 @@ class TodoViewTestCase(TestCase):
         task_refresh = Task.objects.get(pk=task.pk)
         self.assertEqual(task_refresh.title, 'new title')
         self.assertTrue(task_refresh.completed)
+        self.assertEqual(task_refresh.detail, 'updated detail')
         # due_at should be set (aware) to the provided datetime
         self.assertIsNotNone(task_refresh.due_at)
 
