@@ -78,6 +78,14 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(len(response.context['tasks']), 1)
         self.assertEqual(response.context['tasks'][0].detail, 'Task detail content')
 
+    def test_index_form_has_detail_textbox(self):
+        client = Client()
+        response = client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
+
     def test_index_get_order_post(self):
         task1 = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
         task1.save()
@@ -129,6 +137,17 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'todo/edit.html')
         self.assertEqual(response.context['task'], task)
+
+    def test_edit_form_has_detail_textbox(self):
+        task = Task(title='task1', detail='Existing detail', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        response = client.get('/{}/edit/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
+        self.assertContains(response, 'Existing detail')
 
     def test_edit_get_fail(self):
         client = Client()
