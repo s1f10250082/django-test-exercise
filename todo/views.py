@@ -9,10 +9,17 @@ def index(request):
         task = Task(title=request.POST['title'],
                     due_at=make_aware(parse_datetime(request.POST['due_at'])))
         task.save()
-    if request.GET.get('order') == 'due':
-        tasks = Task.objects.order_by('due_at')
+
+    order = request.GET.get('order')
+    if order == 'due':
+        tasks = Task.objects.order_by('due_at', '-posted_at')
+    elif order == 'pending_due':
+        tasks = Task.objects.filter(completed=False).order_by('due_at', '-posted_at')
+    elif order == 'completed_due':
+        tasks = Task.objects.filter(completed=True).order_by('-due_at', '-posted_at')
     else:
         tasks = Task.objects.order_by('-posted_at')
+
     context = {
         'tasks': tasks
     }
