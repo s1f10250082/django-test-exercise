@@ -24,6 +24,12 @@
             <input id="dueInput" name="due_at" type="datetime-local">
         </div>
         <div>
+            <label for="favoriteInput">
+                <input id="favoriteInput" name="favorite" type="checkbox">
+                Favorite
+            </label>
+        </div>
+        <div>
             <label for="photoInput">Photo</label><br>
             <input id="photoInput" name="photo" type="file" accept="image/*">
         </div>
@@ -45,6 +51,9 @@
             <li>Posted at: {{ task.posted_at }}</li>
             {% if task.due_at %}
             <li>Due at: {{ task.due_at }}</li>
+            {% endif %}
+            {% if task.favorite %}
+            <li>Status: Favorite</li>
             {% endif %}
             {% if task.photo %}
             <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;"></li>

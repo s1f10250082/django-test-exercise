@@ -24,7 +24,16 @@ class TaskModelTestCase(TestCase):
         task = Task.objects.get(pk=task.pk)
         self.assertEqual(task.title, 'task1')
         self.assertFalse(task.completed)
+        self.assertFalse(task.favorite)
         self.assertEqual(task.due_at, due)
+
+    def test_create_task_with_favorite(self):
+        task = Task(title='task-fav', favorite=True)
+        task.save()
+
+        task = Task.objects.get(pk=task.pk)
+        self.assertEqual(task.title, 'task-fav')
+        self.assertTrue(task.favorite)
 
     def test_creat_task2(self):
         task = Task(title='task2')
@@ -125,6 +134,20 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(len(response.context['tasks']), 1)
         task = Task.objects.get(pk=response.context['tasks'][0].pk)
         self.assertTrue(task.photo.name.startswith('task_photos/'))
+
+    def test_index_post_with_favorite(self):
+        client = Client()
+        response = client.post('/', {
+            'title': 'Favorite Task',
+            'due_at': '2024-06-30 23:59:59',
+            'favorite': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(len(response.context['tasks']), 1)
+        task = Task.objects.get(pk=response.context['tasks'][0].pk)
+        self.assertTrue(task.favorite)
 
     def test_index_get_order_post(self):
         task1 = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
@@ -234,12 +257,14 @@ class TodoViewTestCase(TestCase):
             'due_at': '2024-07-02 12:00:00',
             'completed': 'on',
             'photo': image,
+            'favorite': 'on',
         })
 
         self.assertEqual(response.status_code, 302)
         task_refresh = Task.objects.get(pk=task.pk)
         self.assertEqual(task_refresh.title, 'new title')
         self.assertTrue(task_refresh.completed)
+        self.assertTrue(task_refresh.favorite)
         self.assertTrue(task_refresh.photo.name.startswith('task_photos/'))
 
     def test_edit_post_overwrite_photo_deletes_old_file(self):

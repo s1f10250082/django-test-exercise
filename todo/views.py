@@ -9,6 +9,8 @@ def index(request):
         due_at = request.POST.get('due_at')
         task = Task(
             title=request.POST['title'],
+            completed='completed' in request.POST,
+            favorite='favorite' in request.POST,
             due_at=make_aware(parse_datetime(due_at)) if due_at else None,
             photo=request.FILES.get('photo'),
         )
@@ -40,6 +42,7 @@ def edit(request, task_id):
         due_at = request.POST.get('due_at')
         task.due_at = make_aware(parse_datetime(due_at)) if due_at else None
         task.completed = 'completed' in request.POST
+        task.favorite = 'favorite' in request.POST
         photo = request.FILES.get('photo')
         if photo:
             if task.photo:
