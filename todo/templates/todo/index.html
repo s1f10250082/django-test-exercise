@@ -24,6 +24,10 @@
             <input id="dueInput" name="due_at" type="datetime-local">
         </div>
         <div>
+            <label for="detailInput">Detail</label><br>
+            <textarea id="detailInput" name="detail" rows="4" placeholder="Input details"></textarea>
+        </div>
+        <div>
             <button type="submit">Submit</button>
         </div>
     </form>
@@ -39,6 +43,9 @@
         <h2><a href="{% url 'detail' task.id %}">{{ task.title }}</a></h2>
         <ul>
             <li>Posted at: {{ task.posted_at }}</li>
+            {% if task.detail %}
+            <li>Detail: {{ task.detail }}</li>
+            {% endif %}
             {% if task.due_at %}
             <li>Due at: {{ task.due_at }}</li>
             {% endif %}

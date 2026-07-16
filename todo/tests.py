@@ -66,12 +66,17 @@ class TodoViewTestCase(TestCase):
 
     def test_index_post(self):
         client = Client()
-        data = {'title': 'Test Task', 'due_at': '2024-06-30 23:59:59'}
+        data = {
+            'title': 'Test Task',
+            'due_at': '2024-06-30 23:59:59',
+            'detail': 'Task detail content',
+        }
         response = client.post('/', data)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(len(response.context['tasks']), 1)
+        self.assertEqual(response.context['tasks'][0].detail, 'Task detail content')
 
     def test_index_get_order_post(self):
         task1 = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
@@ -139,6 +144,7 @@ class TodoViewTestCase(TestCase):
             'title': 'new title',
             'due_at': '2024-07-02 12:00:00',
             'completed': 'on',
+            'detail': 'updated detail',
         }
         response = client.post('/{}/edit/'.format(task.pk), data)
 
@@ -149,6 +155,7 @@ class TodoViewTestCase(TestCase):
         task_refresh = Task.objects.get(pk=task.pk)
         self.assertEqual(task_refresh.title, 'new title')
         self.assertTrue(task_refresh.completed)
+        self.assertEqual(task_refresh.detail, 'updated detail')
         # due_at should be set (aware) to the provided datetime
         self.assertIsNotNone(task_refresh.due_at)
     def test_delete_success(self):
