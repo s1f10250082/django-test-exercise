@@ -11,10 +11,6 @@ def index(request):
             title=request.POST['title'],
             detail=request.POST.get('detail', ''),
             due_at=make_aware(parse_datetime(due_at_value)) if due_at_value else None,
-        due_at = request.POST.get('due_at')
-        task = Task(
-            title=request.POST['title'],
-            due_at=make_aware(parse_datetime(due_at)) if due_at else None,
             photo=request.FILES.get('photo'),
         )
         task.save()
