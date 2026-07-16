@@ -20,6 +20,12 @@
       {% if task.due_at %}
       <li>Due at: {{ task.due_at }}</li>
       {% endif %}
+      {% if task.photo %}
+      <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:400px; max-height:400px;"></li>
+      {% endif %}
+      {% if task.favorite %}
+      <li>Status: Favorite</li>
+      {% endif %}
       {% if task.completed %}
       <li>Status: Completed</li>
       {% else %}
