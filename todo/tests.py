@@ -1,4 +1,9 @@
-from django.test import TestCase, Client
+import os
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, Client, override_settings
 from django.utils import timezone
 from datetime import datetime
 from todo.models import Task
@@ -30,6 +35,22 @@ class TaskModelTestCase(TestCase):
         self.assertFalse(task.completed)
         self.assertEqual(task.due_at, None)
 
+    def test_create_task_with_photo(self):
+        image = SimpleUploadedFile(
+            'test.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        due = timezone.make_aware(datetime(2024, 6, 30, 23, 59, 59))
+        task = Task(title='task-photo', due_at=due, photo=image)
+        task.save()
+
+        task = Task.objects.get(pk=task.pk)
+        self.assertEqual(task.title, 'task-photo')
+        self.assertFalse(task.completed)
+        self.assertEqual(task.due_at, due)
+        self.assertTrue(task.photo.name.startswith('task_photos/'))
+
     def test_is_overdue_future(self):
         due = timezone.make_aware(datetime(2024, 6, 30, 23, 59, 59))
         current = timezone.make_aware(datetime(2024, 6, 30, 0, 0, 0))
@@ -56,6 +77,19 @@ class TaskModelTestCase(TestCase):
 
 
 class TodoViewTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media_root = tempfile.mkdtemp()
+        cls._override_settings = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._override_settings.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._override_settings.disable()
+        shutil.rmtree(cls._media_root, ignore_errors=True)
+        super().tearDownClass()
+
     def test_index_get(self):
         client = Client()
         response = client.get('/')
@@ -85,6 +119,25 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="detail"')
         self.assertContains(response, 'id="detailInput"')
+
+    def test_index_post_with_photo(self):
+        client = Client()
+        image = SimpleUploadedFile(
+            'test.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        response = client.post('/', {
+            'title': 'Test Task',
+            'due_at': '2024-06-30 23:59:59',
+            'photo': image,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(len(response.context['tasks']), 1)
+        task = Task.objects.get(pk=response.context['tasks'][0].pk)
+        self.assertTrue(task.photo.name.startswith('task_photos/'))
 
     def test_index_get_order_post(self):
         task1 = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
@@ -121,6 +174,21 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'todo/detail.html')
         self.assertEqual(response.context['task'], task)
+
+    def test_detail_displays_photo(self):
+        image = SimpleUploadedFile(
+            'test.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        task = Task(title='task1', photo=image)
+        task.save()
+        client = Client()
+        response = client.get('/{}/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<img')
+        self.assertContains(response, task.photo.url)
 
     def test_detail_get_fail(self):
         client = Client()
@@ -177,6 +245,77 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(task_refresh.detail, 'updated detail')
         # due_at should be set (aware) to the provided datetime
         self.assertIsNotNone(task_refresh.due_at)
+
+    def test_edit_post_update_photo(self):
+        task = Task(title='old title')
+        task.save()
+        client = Client()
+        image = SimpleUploadedFile(
+            'update.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        response = client.post('/{}/edit/'.format(task.pk), {
+            'title': 'new title',
+            'due_at': '2024-07-02 12:00:00',
+            'completed': 'on',
+            'photo': image,
+        })
+
+        self.assertEqual(response.status_code, 302)
+        task_refresh = Task.objects.get(pk=task.pk)
+        self.assertEqual(task_refresh.title, 'new title')
+        self.assertTrue(task_refresh.completed)
+        self.assertTrue(task_refresh.photo.name.startswith('task_photos/'))
+
+    def test_edit_post_overwrite_photo_deletes_old_file(self):
+        original_image = SimpleUploadedFile(
+            'original.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        task = Task(title='old title', photo=original_image)
+        task.save()
+        old_path = task.photo.path
+        self.assertTrue(os.path.exists(old_path))
+
+        client = Client()
+        new_image = SimpleUploadedFile(
+            'updated.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        response = client.post('/{}/edit/'.format(task.pk), {
+            'title': 'new title',
+            'due_at': '2024-07-02 12:00:00',
+            'completed': 'on',
+            'photo': new_image,
+        })
+
+        self.assertEqual(response.status_code, 302)
+        task_refresh = Task.objects.get(pk=task.pk)
+        self.assertNotEqual(task_refresh.photo.path, old_path)
+        self.assertTrue(os.path.exists(task_refresh.photo.path))
+        self.assertFalse(os.path.exists(old_path))
+
+    def test_delete_task_deletes_photo_file(self):
+        image = SimpleUploadedFile(
+            'delete.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+        task = Task(title='task1', photo=image)
+        task.save()
+        path = task.photo.path
+        self.assertTrue(os.path.exists(path))
+
+        client = Client()
+        response = client.get('/{}/delete'.format(task.pk))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Task.objects.filter(pk=task.pk).exists())
+        self.assertFalse(os.path.exists(path))
+
     def test_delete_success(self):
         task = Task(title='task1')
         task.save()

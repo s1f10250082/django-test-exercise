@@ -13,7 +13,7 @@
     <div class="container">
     <h1>Sample To Do Application</h1>
     <p>You can submit tasks from the following form.</p>
-    <form action="{% url 'index' %}" method="post">
+    <form action="{% url 'index' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div>
             <label for="titleInput">Title</label><br>
@@ -26,6 +26,8 @@
         <div>
             <label for="detailInput">Detail</label><br>
             <textarea id="detailInput" name="detail" rows="4" placeholder="Input details"></textarea>
+            <label for="photoInput">Photo</label><br>
+            <input id="photoInput" name="photo" type="file" accept="image/*">
         </div>
         <div>
             <button type="submit">Submit</button>
@@ -48,6 +50,9 @@
             {% endif %}
             {% if task.due_at %}
             <li>Due at: {{ task.due_at }}</li>
+            {% endif %}
+            {% if task.photo %}
+            <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;"></li>
             {% endif %}
             {% if task.completed %}
             <li>Status: Completed</li>
