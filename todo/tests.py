@@ -188,6 +188,19 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(list(response.context['tasks']), [favorite_task])
 
+    def test_edit_post_update_favorite(self):
+        task = Task(title='task1', favorite=False)
+        task.save()
+        client = Client()
+        response = client.post('/{}/edit/'.format(task.pk), {
+            'title': 'task1',
+            'favorite': 'on',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        task_refresh = Task.objects.get(pk=task.pk)
+        self.assertTrue(task_refresh.favorite)
+
     def test_detail_get_success(self):
         task = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
         task.save()
@@ -212,6 +225,15 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<img')
         self.assertContains(response, task.photo.url)
+
+    def test_detail_displays_favorite(self):
+        task = Task(title='fav detail', favorite=True)
+        task.save()
+        client = Client()
+        response = client.get('/{}/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Status: Favorite')
 
     def test_detail_get_fail(self):
         client = Client()
