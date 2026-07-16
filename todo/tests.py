@@ -175,6 +175,19 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.context['tasks'][0], task1)
         self.assertEqual(response.context['tasks'][1], task2)
 
+    def test_index_get_favorite_only(self):
+        favorite_task = Task(title='fav task', favorite=True)
+        favorite_task.save()
+        normal_task = Task(title='normal task', favorite=False)
+        normal_task.save()
+
+        client = Client()
+        response = client.get('/?order=favorite')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(list(response.context['tasks']), [favorite_task])
+
     def test_detail_get_success(self):
         task = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
         task.save()

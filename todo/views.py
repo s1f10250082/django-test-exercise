@@ -15,7 +15,10 @@ def index(request):
             photo=request.FILES.get('photo'),
         )
         task.save()
-    if request.GET.get('order') == 'due':
+    order = request.GET.get('order')
+    if order == 'favorite':
+        tasks = Task.objects.filter(favorite=True).order_by('-posted_at')
+    elif order == 'due':
         tasks = Task.objects.order_by('due_at')
     else:
         tasks = Task.objects.order_by('-posted_at')

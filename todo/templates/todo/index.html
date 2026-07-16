@@ -41,7 +41,8 @@
 
     <div>
         <a href="{% url 'index' %}?order=due">Sort by Due Date</a> |
-        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a>
+        <a href="{% url 'index' %}?order=post">Sort by Posted Date</a> |
+        <a href="{% url 'index' %}?order=favorite">Show Favorites Only</a>
     </div>
 
     {% for task in tasks %}
