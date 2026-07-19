@@ -12,10 +12,21 @@
   <body>
     <div class="container">
       <h1>{{ task.title }}</h1>
+      {% if task.photo %}
+      <div class="detail-photo">
+        <img src="{{ task.photo.url }}" alt="{{ task.title }}">
+      </div>
+      {% endif %}
       <ul class="detail-list">
         <li>投稿日時: {{ task.posted_at }}</li>
+        {% if task.detail %}
+        <li>詳細: {{ task.detail }}</li>
+        {% endif %}
         {% if task.due_at %}
         <li>期限: {{ task.due_at }}</li>
+        {% endif %}
+        {% if task.favorite %}
+        <li>状態: お気に入り</li>
         {% endif %}
         {% if task.completed %}
         <li>状態: 完了</li>

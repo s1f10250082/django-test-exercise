@@ -12,7 +12,7 @@
   <body>
     <div class="container">
       <h1>タスクを編集</h1>
-      <form action="{% url 'edit' task.id %}" method="post">
+      <form action="{% url 'edit' task.id %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-group">
           <label for="titleInput">タイトル</label>
@@ -21,6 +21,26 @@
         <div class="form-group">
           <label for="dueInput">期限</label>
           <input id="dueInput" name="due_at" type="datetime-local" value="{{ task.due_at|date:'Y-m-d\TH:i' }}">
+        </div>
+        <div class="form-group">
+          <label for="detailInput">詳細</label>
+          <textarea id="detailInput" name="detail" rows="4">{{ task.detail }}</textarea>
+        </div>
+        <div class="form-group">
+          <label for="photoInput">写真</label>
+          <input id="photoInput" name="photo" type="file" accept="image/*">
+        </div>
+        {% if task.photo %}
+        <div class="form-group">
+          <p>現在の写真:</p>
+          <img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;">
+        </div>
+        {% endif %}
+        <div class="form-group checkbox-group">
+          <label for="favoriteInput">
+            <input id="favoriteInput" name="favorite" type="checkbox" {% if task.favorite %}checked{% endif %}>
+            お気に入りにする
+          </label>
         </div>
         <div class="form-group checkbox-group">
           <label for="completedInput">

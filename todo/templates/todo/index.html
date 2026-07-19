@@ -14,8 +14,7 @@
         <h1>To Do アプリケーション</h1>
         <p>以下のフォームから、やることを追加できます。</p>
 
-
-        <form action="{% url 'index' %}" method="post">
+        <form action="{% url 'index' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
                 <label for="titleInput">タイトル</label>
@@ -24,6 +23,20 @@
             <div class="form-group">
                 <label for="dueInput">期限</label>
                 <input id="dueInput" name="due_at" type="datetime-local">
+            </div>
+            <div class="form-group">
+                <label for="detailInput">詳細</label>
+                <textarea id="detailInput" name="detail" rows="4" placeholder="詳細を入力してください"></textarea>
+            </div>
+            <div class="form-group checkbox-group">
+                <label for="favoriteInput">
+                    <input id="favoriteInput" name="favorite" type="checkbox">
+                    お気に入り
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="photoInput">写真</label>
+                <input id="photoInput" name="photo" type="file" accept="image/*">
             </div>
             <div class="form-actions">
                 <button type="submit">追加する</button>
@@ -36,6 +49,7 @@
                 <option value="due" {% if request.GET.order == 'due' %}selected{% endif %}>期限順</option>
                 <option value="pending_due" {% if request.GET.order == 'pending_due' %}selected{% endif %}>未完了</option>
                 <option value="completed_due" {% if request.GET.order == 'completed_due' %}selected{% endif %}>完了済</option>
+                <option value="favorite" {% if request.GET.order == 'favorite' %}selected{% endif %}>お気に入り</option>
             </select>
         </form>
 
@@ -44,8 +58,17 @@
             <h2><a href="{% url 'detail' task.id %}">{{ task.title }}</a></h2>
             <ul>
                 <li>投稿日時: {{ task.posted_at }}</li>
+                {% if task.detail %}
+                <li>詳細: {{ task.detail }}</li>
+                {% endif %}
                 {% if task.due_at %}
                 <li>期限: {{ task.due_at }}</li>
+                {% endif %}
+                {% if task.favorite %}
+                <li>状態: お気に入り</li>
+                {% endif %}
+                {% if task.photo %}
+                <li>写真:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;"></li>
                 {% endif %}
                 {% if task.completed %}
                 <li>状態: 完了</li>

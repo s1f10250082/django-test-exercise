@@ -3,6 +3,8 @@ from django.http import Http404
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
 from todo.models import Task
+
+
 # Create your views here.
 def index(request):
     if request.method == 'POST':
@@ -10,12 +12,16 @@ def index(request):
         task = Task(
             title=request.POST['title'],
             due_at=make_aware(parse_datetime(due_at)) if due_at else None,
+            detail=request.POST.get('detail', ''),
+            favorite='favorite' in request.POST,
             photo=request.FILES.get('photo'),
         )
         task.save()
 
     order = request.GET.get('order')
-    if order == 'due':
+    if order == 'favorite':
+        tasks = Task.objects.filter(favorite=True).order_by('-posted_at')
+    elif order == 'due':
         tasks = Task.objects.order_by('due_at', '-posted_at')
     elif order == 'pending_due':
         tasks = Task.objects.filter(completed=False).order_by('due_at', '-posted_at')
@@ -46,6 +52,8 @@ def edit(request, task_id):
         task.title = request.POST['title']
         due_at = request.POST.get('due_at')
         task.due_at = make_aware(parse_datetime(due_at)) if due_at else None
+        task.detail = request.POST.get('detail', '')
+        task.favorite = 'favorite' in request.POST
         task.completed = 'completed' in request.POST
         photo = request.FILES.get('photo')
         if photo:
