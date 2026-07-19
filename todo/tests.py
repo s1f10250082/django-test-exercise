@@ -104,7 +104,7 @@ class TodoViewTestCase(TestCase):
         response = client.post('/', data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(response.templates[0].name, 'todo/index.htm')
         self.assertEqual(len(response.context['tasks']), 1)
 
     def test_index_post_with_photo(self):
