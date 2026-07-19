@@ -6,44 +6,41 @@
     <title>To Do Application</title>
     <meta charset="UTF-8">
     <meta name="author" content="INIAD">
-    <link rel="stylesheet" href="{% static 'todo/css/detail.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'todo/css/detail.css' %}">
   </head>
 
   <body>
     <div class="container">
-      <h1>{{ task.title }}</h1>
-      {% if task.photo %}
-      <div class="detail-photo">
-        <img src="{{ task.photo.url }}" alt="{{ task.title }}">
-      </div>
+    <h1>{{ task.title }}</h1>
+    <ul>
+      <li>Posted at: {{ task.posted_at }}</li>
+      {% if task.detail %}
+      <li>Detail: {{ task.detail }}</li>
       {% endif %}
-      <ul class="detail-list">
-        <li>投稿日時: {{ task.posted_at }}</li>
-        {% if task.detail %}
-        <li>詳細: {{ task.detail }}</li>
-        {% endif %}
-        {% if task.due_at %}
-        <li>期限: {{ task.due_at }}</li>
-        {% endif %}
-        {% if task.favorite %}
-        <li>状態: お気に入り</li>
-        {% endif %}
-        {% if task.completed %}
-        <li>状態: 完了</li>
-        {% else %}
-        <li>状態: 未完了</li>
-        {% endif %}
-      </ul>
+      {% if task.due_at %}
+      <li>Due at: {{ task.due_at }}</li>
+      {% endif %}
+      {% if task.photo %}
+      <li>Photo:<br><img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:400px; max-height:400px;"></li>
+      {% endif %}
+      {% if task.favorite %}
+      <li>Status: Favorite</li>
+      {% endif %}
+      {% if task.completed %}
+      <li>Status: Completed</li>
+      {% else %}
+      <li>Status: Not Completed</li>
+      {% endif %}
+    </ul>
 
-      <div class="actions">
-        <div class="primary-actions">
-          <a href="{% url 'edit' task.id %}" class="action-btn">編集</a>
-          <a href="{% url 'delete' task.id %}" class="action-btn danger-btn">削除</a>
-        </div>
-        <div class="secondary-action">
-          <a href="{% url 'index' %}" class="text-link">トップへ戻る</a>
-        </div>
-      </div>
+    <div>
+      <a href="{% url 'index' %}">Top</a>
+      <a href="{% url 'delete' task.id %}">Delete</a>
+    </div>
+    <div>
+      <a href="{% url 'edit' task.id %}">Edit</a> |
+      <a href="{% url 'index' %}">Top</a>
+    </div>
     </div>
   </body>
 

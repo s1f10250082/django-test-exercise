@@ -6,56 +6,54 @@
     <title>To Do Application</title>
     <meta charset="UTF-8">
     <meta name="author" content="INIAD">
-    <link rel="stylesheet" href="{% static 'todo/css/edit.css' %}?v=2">
   </head>
 
   <body>
-    <div class="container">
-      <h1>タスクを編集</h1>
-      <form action="{% url 'edit' task.id %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="titleInput">タイトル</label>
-          <input id="titleInput" name="title" type="text" value="{{ task.title }}">
-        </div>
-        <div class="form-group">
-          <label for="dueInput">期限</label>
-          <input id="dueInput" name="due_at" type="datetime-local" value="{{ task.due_at|date:'Y-m-d\TH:i' }}">
-        </div>
-        <div class="form-group">
-          <label for="detailInput">詳細</label>
-          <textarea id="detailInput" name="detail" rows="4">{{ task.detail }}</textarea>
-        </div>
-        <div class="form-group">
-          <label for="photoInput">写真</label>
-          <input id="photoInput" name="photo" type="file" accept="image/*">
-        </div>
-        {% if task.photo %}
-        <div class="form-group">
-          <p>現在の写真:</p>
-          <img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;">
-        </div>
-        {% endif %}
-        <div class="form-group checkbox-group">
-          <label for="favoriteInput">
-            <input id="favoriteInput" name="favorite" type="checkbox" {% if task.favorite %}checked{% endif %}>
-            お気に入りにする
-          </label>
-        </div>
-        <div class="form-group checkbox-group">
-          <label for="completedInput">
-            <input id="completedInput" name="completed" type="checkbox" {% if task.completed %}checked{% endif %}>
-            完了済みにする
-          </label>
-        </div>
-        <div class="form-actions">
-          <button type="submit">保存</button>
-        </div>
-      </form>
-
-      <div class="actions">
-        <a href="{% url 'detail' task.id %}">詳細に戻る</a>
+    <h1>Edit Task</h1>
+    <form action="{% url 'edit' task.id %}" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div>
+        <label for="titleInput">Title</label><br>
+        <input id="titleInput" name="title" type="text" value="{{ task.title }}">
       </div>
+      <div>
+        <label for="dueInput">Due at:</label><br>
+        <input id="dueInput" name="due_at" type="datetime-local" value="{{ task.due_at|date:'Y-m-d\TH:i' }}">
+      </div>
+      <div>
+        <label for="detailInput">Detail</label><br>
+        <textarea id="detailInput" name="detail" rows="4">{{ task.detail }}</textarea>
+      </div>
+      <div>
+        <label for="photoInput">Photo</label><br>
+        <input id="photoInput" name="photo" type="file" accept="image/*">
+      </div>
+      {% if task.photo %}
+      <div>
+        <p>Current photo:</p>
+        <img src="{{ task.photo.url }}" alt="{{ task.title }}" style="max-width:200px; max-height:200px;">
+      </div>
+      {% endif %}
+      <div>
+        <label for="favoriteInput">
+          <input id="favoriteInput" name="favorite" type="checkbox" {% if task.favorite %}checked{% endif %}>
+          Favorite
+        </label>
+      </div>
+      <div>
+        <label for="completedInput">
+          <input id="completedInput" name="completed" type="checkbox" {% if task.completed %}checked{% endif %}>
+          Completed
+        </label>
+      </div>
+      <div>
+        <button type="submit">Save</button>
+      </div>
+    </form>
+    <br>
+
+    <div>
+      <a href="{% url 'detail' task.id %}">Back to detail</a>
     </div>
   </body>
 

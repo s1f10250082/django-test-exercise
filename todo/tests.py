@@ -24,7 +24,16 @@ class TaskModelTestCase(TestCase):
         task = Task.objects.get(pk=task.pk)
         self.assertEqual(task.title, 'task1')
         self.assertFalse(task.completed)
+        self.assertFalse(task.favorite)
         self.assertEqual(task.due_at, due)
+
+    def test_create_task_with_favorite(self):
+        task = Task(title='task-fav', favorite=True)
+        task.save()
+
+        task = Task.objects.get(pk=task.pk)
+        self.assertEqual(task.title, 'task-fav')
+        self.assertTrue(task.favorite)
 
     def test_creat_task2(self):
         task = Task(title='task2')
@@ -100,12 +109,25 @@ class TodoViewTestCase(TestCase):
 
     def test_index_post(self):
         client = Client()
-        data = {'title': 'Test Task', 'due_at': '2024-06-30 23:59:59'}
+        data = {
+            'title': 'Test Task',
+            'due_at': '2024-06-30 23:59:59',
+            'detail': 'Task detail content',
+        }
         response = client.post('/', data)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(len(response.context['tasks']), 1)
+        self.assertEqual(response.context['tasks'][0].detail, 'Task detail content')
+
+    def test_index_form_has_detail_textbox(self):
+        client = Client()
+        response = client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
 
     def test_index_post_with_photo(self):
         client = Client()
@@ -125,6 +147,20 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(len(response.context['tasks']), 1)
         task = Task.objects.get(pk=response.context['tasks'][0].pk)
         self.assertTrue(task.photo.name.startswith('task_photos/'))
+
+    def test_index_post_with_favorite(self):
+        client = Client()
+        response = client.post('/', {
+            'title': 'Favorite Task',
+            'due_at': '2024-06-30 23:59:59',
+            'favorite': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(len(response.context['tasks']), 1)
+        task = Task.objects.get(pk=response.context['tasks'][0].pk)
+        self.assertTrue(task.favorite)
 
     def test_index_get_order_post(self):
         task1 = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
@@ -152,6 +188,32 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.context['tasks'][0], task1)
         self.assertEqual(response.context['tasks'][1], task2)
 
+    def test_index_get_favorite_only(self):
+        favorite_task = Task(title='fav task', favorite=True)
+        favorite_task.save()
+        normal_task = Task(title='normal task', favorite=False)
+        normal_task.save()
+
+        client = Client()
+        response = client.get('/?order=favorite')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(list(response.context['tasks']), [favorite_task])
+
+    def test_edit_post_update_favorite(self):
+        task = Task(title='task1', favorite=False)
+        task.save()
+        client = Client()
+        response = client.post('/{}/edit/'.format(task.pk), {
+            'title': 'task1',
+            'favorite': 'on',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        task_refresh = Task.objects.get(pk=task.pk)
+        self.assertTrue(task_refresh.favorite)
+
     def test_detail_get_success(self):
         task = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
         task.save()
@@ -177,6 +239,15 @@ class TodoViewTestCase(TestCase):
         self.assertContains(response, '<img')
         self.assertContains(response, task.photo.url)
 
+    def test_detail_displays_favorite(self):
+        task = Task(title='fav detail', favorite=True)
+        task.save()
+        client = Client()
+        response = client.get('/{}/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Status: Favorite')
+
     def test_detail_get_fail(self):
         client = Client()
         response = client.get('/1/')
@@ -193,6 +264,17 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.templates[0].name, 'todo/edit.html')
         self.assertEqual(response.context['task'], task)
 
+    def test_edit_form_has_detail_textbox(self):
+        task = Task(title='task1', detail='Existing detail', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        response = client.get('/{}/edit/'.format(task.pk))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="detail"')
+        self.assertContains(response, 'id="detailInput"')
+        self.assertContains(response, 'Existing detail')
+
     def test_edit_get_fail(self):
         client = Client()
         response = client.get('/1/edit/')
@@ -207,6 +289,7 @@ class TodoViewTestCase(TestCase):
             'title': 'new title',
             'due_at': '2024-07-02 12:00:00',
             'completed': 'on',
+            'detail': 'updated detail',
         }
         response = client.post('/{}/edit/'.format(task.pk), data)
 
@@ -217,6 +300,7 @@ class TodoViewTestCase(TestCase):
         task_refresh = Task.objects.get(pk=task.pk)
         self.assertEqual(task_refresh.title, 'new title')
         self.assertTrue(task_refresh.completed)
+        self.assertEqual(task_refresh.detail, 'updated detail')
         # due_at should be set (aware) to the provided datetime
         self.assertIsNotNone(task_refresh.due_at)
 
@@ -234,12 +318,14 @@ class TodoViewTestCase(TestCase):
             'due_at': '2024-07-02 12:00:00',
             'completed': 'on',
             'photo': image,
+            'favorite': 'on',
         })
 
         self.assertEqual(response.status_code, 302)
         task_refresh = Task.objects.get(pk=task.pk)
         self.assertEqual(task_refresh.title, 'new title')
         self.assertTrue(task_refresh.completed)
+        self.assertTrue(task_refresh.favorite)
         self.assertTrue(task_refresh.photo.name.startswith('task_photos/'))
 
     def test_edit_post_overwrite_photo_deletes_old_file(self):
