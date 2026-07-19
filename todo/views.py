@@ -13,6 +13,7 @@ def index(request):
             title=request.POST['title'],
             due_at=make_aware(parse_datetime(due_at)) if due_at else None,
             detail=request.POST.get('detail', ''),
+            completed='completed' in request.POST,
             favorite='favorite' in request.POST,
             photo=request.FILES.get('photo'),
         )

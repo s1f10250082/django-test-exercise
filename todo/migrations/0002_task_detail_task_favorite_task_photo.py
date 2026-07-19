@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('todo', '0001_initial'),
+        ('todo', '0002_task_photo'),
     ]
 
     operations = [
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='favorite',
             field=models.BooleanField(default=False),
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name='task',
             name='photo',
             field=models.ImageField(blank=True, null=True, upload_to='photos/'),
