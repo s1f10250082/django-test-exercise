@@ -1,5 +1,5 @@
 body {
-    font-family: "Yu Gothic", "Hiragino Sans", "Meiryo", sans-serif;
+    font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Meiryo", "Segoe UI", sans-serif;
     margin: 0;
     padding: 32px 16px;
     background: linear-gradient(135deg, #f3f8ff 0%, #f9fcff 100%);
@@ -67,10 +67,6 @@ h1 {
 
 .secondary-btn {
     background: linear-gradient(135deg, #6c7a89 0%, #5d6b78 100%);
-}
-
-.danger-btn {
-    background: linear-gradient(135deg, #e76f51 0%, #d9534f 100%);
 }
 
 .secondary-action {
