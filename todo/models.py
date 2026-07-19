@@ -10,7 +10,9 @@ class Task(models.Model):
     favorite = models.BooleanField(default=False)
     posted_at = models.DateTimeField(default=timezone.now)
     due_at = models.DateTimeField(null=True, blank=True)
-    photo = models.FileField(upload_to='task_photos/', null=True, blank=True)
+    detail = models.TextField(blank=True, default='')
+    favorite = models.BooleanField(default=False)
+    photo = models.ImageField(upload_to='task_photos/', blank=True, null=True)
 
     def is_overdue(self, dt):
         if self.due_at is None:
