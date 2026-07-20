@@ -4,6 +4,7 @@ import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, Client, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from datetime import datetime
 from todo.models import Task
@@ -201,6 +202,37 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(list(response.context['tasks']), [favorite_task])
 
+    def test_index_displays_japanese_ui(self):
+        client = Client()
+        response = client.get(reverse('index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ToDo アプリ')
+        self.assertContains(response, '追加する')
+        self.assertContains(response, 'タイトル')
+
+    def test_edit_page_renders_form(self):
+        task = Task(title='task1')
+        task.save()
+        client = Client()
+        response = client.get(reverse('edit', args=[task.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'todo/edit.html')
+        self.assertContains(response, 'タスクを編集')
+        self.assertContains(response, '保存')
+        self.assertContains(response, 'name="title"')
+
+    def test_delete_removes_task_and_redirects(self):
+        task = Task(title='delete me')
+        task.save()
+        client = Client()
+        response = client.post(reverse('delete', args=[task.pk]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('index'))
+        self.assertFalse(Task.objects.filter(pk=task.pk).exists())
+
     def test_edit_post_update_favorite(self):
         task = Task(title='task1', favorite=False)
         task.save()
@@ -246,7 +278,7 @@ class TodoViewTestCase(TestCase):
         response = client.get('/{}/'.format(task.pk))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Status: Favorite')
+        self.assertContains(response, '状態: お気に入り')
 
     def test_detail_get_fail(self):
         client = Client()
